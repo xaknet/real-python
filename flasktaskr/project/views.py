@@ -1,4 +1,4 @@
-from forms import AddTaskFrom
+from forms import AddTaskForm
 
 from functools import wraps
 from flask import Flask, flash, redirect, render_template, \
@@ -55,10 +55,10 @@ def login():
 def tasks():
     open_tasks = db.session.query(Task) \
         .filter_by(status='1').order_by(Task.due_date.asc())
-    closed_tasks = db.session.query(Tasl) \
+    closed_tasks = db.session.query(Task) \
         .filter_by(status='0').order_by(Task.due_date.asc())
     return render_template(
-        'task.html',
+        'tasks.html',
         form=AddTaskForm(request.form),
         open_tasks=open_tasks,
         closed_tasks=closed_tasks
@@ -73,13 +73,15 @@ def new_task():
         if form.validate_on_submit():
             new_task = Task(
                 form.name.data,
-                form.due_date.date,
+                form.due_date.data,
                 form.priority.data,
                 '1'
             )
             db.session.add(new_task)
             db.session.commit()
             flash('New entry was successfully posted. Thanks.')
+        else:
+            flash("New entry wasn't added! Please check the form")
     return redirect(url_for('tasks'))
 
 # Mark tasks as complete
@@ -87,7 +89,7 @@ def new_task():
 @login_required
 def complete(task_id):
     new_id = task_id
-    db.session.query(Task).filter_by(task_id=new_id).update({"staus":"0"})
+    db.session.query(Task).filter_by(task_id=new_id).update({"status":"0"})
     db.session.commit()
     flash('The task is complete. Nice.')
     return redirect(url_for('tasks'))
